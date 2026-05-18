@@ -26,7 +26,7 @@ Der urspruengliche Rohdatensatz umfasste insgesamt 102 verschiedene zivile und m
 Aufgrund der grossen Datenmenge (ueber 20.000 hochaufloesende Bilder) und aus urheberrechtlichen Gruenden sind die reinen Bilddaten nicht in diesem GitHub-Repository enthalten. Das Gleiche gilt fuer die grossen, trainierten Modellgewichte (.keras / .h5), um die Dateigroessen-Limits von GitHub zu respektieren. Um das Projekt lokal auszufuehren, muss die Ordnerstruktur unter data/ manuell mit den entsprechenden Klassenordnern aus der oben genannten Quelle befuellt werden.
 
 ### Filterkriterien und Selektion
-Um ein stabiles Training von Grund auf (from scratch) zu ermoeglichen, wurde ein gezieltes Sub-Sampling durchgefuehrt. Es wurden ausschliesslich militaerische Klassen selektiert, die eine ausreichende Datendichte von 300 bis 800 Bildern pro Klasse aufwiesen, um Overfitting in Few-Shot-Szenarien zu verhindern. Der final kuratierte Datensatz umfasst 20.113 Bilder.
+Um ein stabiles Training von Grund auf (from scratch) zu ermoeglichen, wurde ein gezieltes Sub-Sampling durchgefuehrt. Es wurden ausschliesslich militaerische Klassen selektiert, die eine ausreichende Datendichte von mindestens 300 Bildern pro Klasse aufwiesen, um Overfitting in Few-Shot-Szenarien zu verhindern. Der final kuratierte Datensatz umfasst 20.113 Bilder.
 
 ### Die 28 selektierten Klassen
 Das Modell wurde auf die Erkennung der folgenden 28 spezifischen militaerischen Jets, Bomber und Hubschrauber trainiert:
