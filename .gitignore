@@ -1,0 +1,6 @@
+echo "*.keras" >> .gitignore
+echo "*.h5" >> .gitignore
+echo "Model/" >> .gitignore
+echo "data/" >> .gitignore
+echo "venv312/" >> .gitignore
+echo "__pycache__/" >> .gitignore

@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="9c61804c-1ca8-4f1e-80f9-0bd4a4de80c5" name="Changes" comment="Results of the testruns of the architectures">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;ReviveHD&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/ReviveHD/DL_Military_Aircraft.git&quot;,
+    &quot;accountId&quot;: &quot;2f61c2a7-0e0f-428f-8918-bb84a232b24e&quot;
+  }
+}</component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0004683942568042" />
+      <entry key="MS500" value="1.2376424214584079" />
+      <entry key="S2" value="2.4784560302095624" />
+      <entry key="S5" value="4.62419169876798" />
+      <entry key="S10" value="7.187981485409843" />
+      <entry key="S30" value="11.25026951641453" />
+      <entry key="S60" value="12.9151712971364" />
+      <entry key="M2" value="13.897980909920223" />
+      <entry key="M5" value="14.545426927024733" />
+      <entry key="M10" value="14.993498684224166" />
+      <entry key="M15" value="16.093366497156985" />
+      <entry key="M30" value="22.19916388505521" />
+      <entry key="H1" value="33.580637184661164" />
+      <entry key="H2" value="47.67388518186446" />
+      <entry key="H4" value="62.69041417250453" />
+      <entry key="D1" value="90.95371108528981" />
+      <entry key="W1" value="99.41526594083192" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="1.74776054E-315" />
+      <entry key="S10" value="5.4224631415654645E-158" />
+      <entry key="S30" value="5.872342786748786E-53" />
+      <entry key="S60" value="1.0804952407062272E-26" />
+      <entry key="M2" value="1.4689271627080475E-13" />
+      <entry key="M5" value="1.1151665027198168E-5" />
+      <entry key="M10" value="0.004722498047749845" />
+      <entry key="M15" value="0.0354640463755454" />
+      <entry key="M30" value="0.2663291354869305" />
+      <entry key="H1" value="0.7324207202487762" />
+      <entry key="H2" value="1.259111596013124" />
+      <entry key="H4" value="1.7801775321719688" />
+      <entry key="D1" value="2.6980355035698413" />
+      <entry key="W1" value="2.953216519352879" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.9663950837430564" />
+      <entry key="MS500" value="1.2297218741898792" />
+      <entry key="S2" value="2.4750289595468296" />
+      <entry key="S5" value="4.621688973243511" />
+      <entry key="S10" value="7.185971819189254" />
+      <entry key="S30" value="11.249165624791663" />
+      <entry key="S60" value="12.914526795897977" />
+      <entry key="M2" value="13.897630983849462" />
+      <entry key="M5" value="14.545290635922806" />
+      <entry key="M10" value="14.998117186834158" />
+      <entry key="M15" value="16.128635464300075" />
+      <entry key="M30" value="22.46492072017554" />
+      <entry key="H1" value="34.31223490642908" />
+      <entry key="H2" value="48.93198253859847" />
+      <entry key="H4" value="64.46939253939748" />
+      <entry key="D1" value="93.65119006541329" />
+      <entry key="W1" value="102.36838512603647" />
+    </decayedShown>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3DISo0FeocJUoxnVQ2WX2oYTVz3" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.CNN_Training.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.picture.executor": "Run",
+    "Python.run_benchmark.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/Users/Kaspar/PycharmProjects/DL_Military_Aircraft/Benchmark_Results",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Kaspar\PycharmProjects\DL_Military_Aircraft\Benchmark_Results" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Kaspar\PycharmProjects\DL_Military_Aircraft" />
+      <recent name="C:\Users\Kaspar\PycharmProjects\DL_Military_Aircraft\Benchmark_Results" />
+      <recent name="C:\Users\Kaspar\PycharmProjects\DL_Military_Aircraft\Plots" />
+      <recent name="C:\Users\Kaspar\PycharmProjects\DL_Military_Aircraft\tempData" />
+      <recent name="C:\Users\Kaspar\PycharmProjects\DL_Military_Aircraft\Src" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.run_benchmark">
+    <configuration name="CNN_Training" type="PythonConfigurationType" factoryName="Python">
+      <module name="DL_Military_Aircraft" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="LD_LIBRARY_PATH" value="/usr/lib/wsl/lib:/home/kaspar/cnn_projekt/cuda_libs:/usr/lib/x86_64-linux-gnu" />
+        <env name="TF_CPP_MIN_LOG_LEVEL" value="2" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Src/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="picture" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="DL_Military_Aircraft" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Src" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Src/picture.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="run_benchmark" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="DL_Military_Aircraft" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="LD_LIBRARY_PATH" value="/usr/lib/wsl/lib:/home/kaspar/cnn_projekt/cuda_libs:/usr/lib/x86_64-linux-gnu" />
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="TF_CPP_MIN_LOG_LEVEL" value="2" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Src/run_benchmark.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.CNN_Training" />
+      <item itemvalue="Python.picture" />
+      <item itemvalue="Python.run_benchmark" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.run_benchmark" />
+        <item itemvalue="Python.picture" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-PY-261.24374.152" />
+        <option value="bundled-python-sdk-c59985aa861c-c2ffad84badb-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.24374.152" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="9c61804c-1ca8-4f1e-80f9-0bd4a4de80c5" name="Changes" comment="" />
+      <created>1777968262728</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1777968262728</updated>
+      <workItem from="1777968263756" duration="752000" />
+      <workItem from="1778276384392" duration="678000" />
+      <workItem from="1778336578655" duration="2231000" />
+      <workItem from="1778340398192" duration="4576000" />
+      <workItem from="1778359367573" duration="9026000" />
+      <workItem from="1778422461971" duration="8510000" />
+      <workItem from="1778499818860" duration="14658000" />
+      <workItem from="1778590672052" duration="8278000" />
+      <workItem from="1778599322197" duration="9096000" />
+      <workItem from="1778667772009" duration="4976000" />
+      <workItem from="1778674224232" duration="7942000" />
+      <workItem from="1778683107061" duration="22401000" />
+      <workItem from="1778755929670" duration="17416000" />
+      <workItem from="1778833027338" duration="4941000" />
+      <workItem from="1778927790831" duration="20037000" />
+      <workItem from="1779013367310" duration="17748000" />
+      <workItem from="1779095461804" duration="16975000" />
+    </task>
+    <task id="LOCAL-00001" summary="Setup of the Github for the Deep Learning project for the identification of different military aircrafts.">
+      <option name="closed" value="true" />
+      <created>1777968440332</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1777968440332</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Setup of the Structure for the code and data">
+      <option name="closed" value="true" />
+      <created>1777968959190</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1777968959190</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Creation of 10 architecures in architectures.py as a path of evolution">
+      <option name="closed" value="true" />
+      <created>1779126638046</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1779126638046</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Results of the testruns of the architectures">
+      <option name="closed" value="true" />
+      <created>1779130835929</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1779130835929</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Results of the testruns of the architectures">
+      <option name="closed" value="true" />
+      <created>1779132344587</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1779132344587</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Results of the testruns of the architectures">
+      <option name="closed" value="true" />
+      <created>1779132916566</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1779132916566</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="main" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+        <entry key="User">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="*" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="CUSTOM_BOOLEAN_PROPERTIES">
+                <map>
+                  <entry key="Show.Git.Branches" value="true" />
+                </map>
+              </option>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="main" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="user">
+                    <value>
+                      <list>
+                        <option value="*" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Setup of the Github for the Deep Learning project for the identification of different military aircrafts." />
+    <MESSAGE value="Setup of the Structure for the code and data" />
+    <MESSAGE value="Creation of 10 architecures in architectures.py as a path of evolution" />
+    <MESSAGE value="Creation of 10 architecures in architectures.py as a path of evolution and the data of the testing and training results" />
+    <MESSAGE value="Results of the testruns of the architectures" />
+    <option name="LAST_COMMIT_MESSAGE" value="Results of the testruns of the architectures" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/DL_Military_Aircraft$CNN_Training.coverage" NAME="CNN_Training Coverage Results" MODIFIED="1779095604357" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/DL_Military_Aircraft$picture.coverage" NAME="picture Coverage Results" MODIFIED="1779041925475" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Src" />
+    <SUITE FILE_PATH="coverage/DL_Military_Aircraft$main.coverage" NAME="main Coverage Results" MODIFIED="1778341238965" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Src" />
+    <SUITE FILE_PATH="coverage/DL_Military_Aircraft$run_benchmark.coverage" NAME="run_benchmark Coverage Results" MODIFIED="1779101509191" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+  </component>
+</project>

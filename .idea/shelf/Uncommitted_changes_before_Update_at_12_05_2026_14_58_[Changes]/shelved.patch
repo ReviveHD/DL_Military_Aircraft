@@ -1,0 +1,335 @@
+Index: Src/DataPreProcessing.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Src/DataPreProcessing.py b/Src/DataPreProcessing.py
+new file mode 100644
+--- /dev/null	(date 1778446360722)
++++ b/Src/DataPreProcessing.py	(date 1778446360722)
+@@ -0,0 +1,37 @@
++import os
++
++
++import pandas as pd
++from sklearn.model_selection import train_test_split
++
++import tensorflow as tf
++
++
++def define_paths(dir):
++    filepaths = []
++    labels = []
++    folds = os.listdir(dir)
++    for fold in folds:
++        folderpath = os.path.join(dir, fold)
++        filelist = os.listdir(folderpath)
++        for file in filelist:
++            fpath = os.path.join(folderpath, file)
++            filepaths.append(fpath)
++            labels.append(fold)
++    return filepaths, labels
++
++def define_df(files, classes):
++    Fseries = pd.Series(files, name='filepaths')
++    Lseries = pd.Series(classes, name='labels')
++    return pd.concat([Fseries, Lseries], axis=1)
++
++def full_data(data_dir):
++    files, classes = define_paths(data_dir)
++    df = define_df(files, classes)
++    strat = df['labels']
++    # Split into 70% train and 30% temporary
++    train_df, dummy_df = train_test_split(df, train_size=0.7, shuffle=True, random_state=123, stratify=strat)
++    # Split the temporary 30% into 15% validation and 15% test
++    strat = dummy_df['labels']
++    valid_df, test_df = train_test_split(dummy_df, train_size=0.5, shuffle=True, random_state=123, stratify=strat)
++    return train_df, valid_df, test_df
+Index: Src/Visualization.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Src/Visualization.py b/Src/Visualization.py
+new file mode 100644
+--- /dev/null	(date 1778500197060)
++++ b/Src/Visualization.py	(date 1778500197060)
+@@ -0,0 +1,278 @@
++import os
++
++from keras.src.layers import RandomFlip, RandomRotation, RandomZoom
++from matplotlib import pyplot as plt
++
++import cv2
++import numpy as np
++import pandas as pd
++import seaborn as sns
++from sklearn.model_selection import train_test_split
++from sklearn.metrics import confusion_matrix, classification_report
++
++import tensorflow as tf
++from tensorflow import keras
++from tensorflow.keras.models import Sequential
++from tensorflow.keras.optimizers import Adam, Adamax
++from tensorflow.keras.preprocessing.image import ImageDataGenerator
++from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Activation, Dropout, BatchNormalization
++from tensorflow.keras import regularizers
++from tensorflow.keras import mixed_precision
++"""mixed_precision.set_global_policy('mixed_float16')"""
++
++from Src.DataPreProcessing import full_data
++
++# ============================================
++# 1. Check GPU
++# ============================================
++print("TensorFlow version:", tf.__version__)
++print("Num GPUs Available:", len(tf.config.list_physical_devices('GPU')))
++print("GPUs:", tf.config.list_physical_devices('GPU'))
++
++strategy = tf.distribute.MirroredStrategy()
++print("Number of devices:", strategy.num_replicas_in_sync)
++
++
++# Provide the path to the full dataset directory
++dir = 'data'
++
++# Load the initial DataFrames from the full 88-class dataset
++train_df, valid_df, test_df = full_data(dir)
++print(f"Successfully loaded dataframes with {train_df['labels'].nunique()} classes.")
++
++# --- FILTERING STEP ---
++# Define the list of the 40 classes you want to keep.
++selected_classes = [
++    'A10', 'A400M', 'AH64', 'B1', 'B2', 'B52', 'C17', 'EF2000', 'F4', 'F14',  'F22',  'F117', 'J10', 'J20', 'JAS39', 'Mig29', 'Mig31', 'Mirage2000', 'Rafale', 'Su24', 'Su34', 'Tornado', 'V22'
++]
++"""'F15', 'F16', 'F18','F35',"""
++
++# Filter the dataframes to only include rows with the selected classes.
++train_df_filtered = train_df[train_df['labels'].isin(selected_classes)].copy()
++valid_df_filtered = valid_df[valid_df['labels'].isin(selected_classes)].copy()
++test_df_filtered = test_df[test_df['labels'].isin(selected_classes)].copy()
++
++# Verify the result. The number of classes should now be 40.
++print(f"\n--- After Filtering ---")
++print(f"New number of classes in training set: {train_df_filtered['labels'].nunique()}")
++print(f"Filtered training images: {len(train_df_filtered)}")
++print(f"Test: {test_df_filtered['labels'].shape[0]}")
++print(f"Valid: {valid_df_filtered['labels'].shape[0]}")
++
++train_paths = train_df_filtered['filepaths'].values
++train_labels = train_df_filtered['labels'].values
++valid_paths = valid_df_filtered['filepaths'].values
++valid_labels = valid_df_filtered['labels'].values
++test_paths = test_df_filtered['filepaths'].values
++test_labels = test_df_filtered['labels'].values
++
++class_names = sorted(list(set(train_labels)))
++label_to_index = {name: i for i, name in enumerate(class_names)}
++index_to_label = {i: name for i, name in enumerate(class_names)} # Good to have for later
++
++train_labels_int = [label_to_index[label] for label in train_labels]
++valid_labels_int = [label_to_index[label] for label in valid_labels]
++test_labels_int = [label_to_index[label] for label in test_labels]
++
++BATCH_SIZE = 32
++IMG_SIZE = (224, 224)
++class_names = sorted(list(set(train_labels)))
++
++print(class_names)
++print(train_labels)
++
++def process_path(file_path, label):
++    img = tf.io.read_file(file_path)
++    img = tf.io.decode_jpeg(img, channels=3)
++    # WICHTIG: Bild in Float konvertieren und durch 255 teilen
++    img = tf.cast(img, tf.float32)/255
++    img = tf.image.resize(img, IMG_SIZE)
++    label = tf.one_hot(label, len(class_names))
++    return img, label
++
++def configure_for_performance(dataset, shuffle=False):
++    """Applies performance optimizations to a tf.data.Dataset."""
++    # Cache the dataset in memory to avoid re-reading from disk every epoch
++    dataset = dataset.cache()
++    if shuffle:
++        # Shuffle the data
++        dataset = dataset.shuffle(buffer_size=1000)
++    # Batch the data
++    dataset = dataset.batch(BATCH_SIZE)
++    # Prefetch the next batch while the GPU is working on the current one
++    dataset = dataset.prefetch(buffer_size=AUTOTUNE)
++    return dataset
++
++AUTOTUNE = tf.data.AUTOTUNE
++
++train_gen = tf.data.Dataset.from_tensor_slices((train_paths, train_labels_int)).map(process_path)
++test_gen = tf.data.Dataset.from_tensor_slices((test_paths, test_labels_int)).map(process_path)
++valid_gen = tf.data.Dataset.from_tensor_slices((valid_paths, valid_labels_int)).map(process_path)
++
++train_gen = configure_for_performance(train_gen, shuffle=True)
++valid_gen = configure_for_performance(valid_gen)
++test_gen = configure_for_performance(test_gen)
++
++# Function to display a sample of images from the tf.data generator
++def show_images(gen):
++    # Get a single batch of images and labels
++    # .as_numpy_iterator() converts the TensorFlow tensors to NumPy arrays
++    images, labels = next(gen.as_numpy_iterator())
++
++    plt.figure(figsize=(20, 20))
++
++    for i in range(min(len(labels), 25)):
++        plt.subplot(5, 5, i + 1)
++        image = images[i].astype('uint8')
++        plt.imshow(tf.cast(image,tf.uint8)*255)
++
++        index = np.argmax(labels[i])
++        class_name = index_to_label[index]
++
++        plt.title(class_name, color='blue', fontsize=12)
++        plt.axis('off')
++    plt.show()
++
++# Function to plot the distribution of classes
++def plot_label_count(df, plot_title):
++    vcounts = df['labels'].value_counts()
++    labels = vcounts.keys().tolist()
++    values = vcounts.tolist()
++
++    plt.figure(figsize=(min(len(labels) * 1, 20), 6))
++    sns.barplot(x=labels, y=values)
++    plt.title(f'Images per Label in {plot_title} data', fontsize=18)
++    plt.xticks(rotation=90)
++    plt.xlabel('Class')
++    plt.ylabel('Image Count')
++    plt.show()
++
++# 1. Plot the distribution of the 40 classes
++print("Displaying class distribution for the filtered training data...")
++plot_label_count(train_df_filtered, 'Filtered Training')
++
++# 2. Show a sample of images
++print("\nDisplaying a sample of images from the training generator...")
++show_images(train_gen)
++
++from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
++import datetime
++from tensorflow.keras.callbacks import TensorBoard
++
++
++log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M")
++
++#
++tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=0)
++
++
++
++
++model_checkpoint = ModelCheckpoint(
++    filepath='Model/best_model'+datetime.datetime.now().strftime("%Y%m%d-%H%M")+'.h5',
++    monitor='val_loss',
++    save_best_only=True,
++    verbose=1
++)
++
++# EarlyStopping halts training when validation loss stops improving
++early_stopping = EarlyStopping(
++    monitor='val_loss',
++    patience=5,
++    restore_best_weights=True,
++    verbose=1
++)
++
++callbacks_list = [model_checkpoint, early_stopping, tensorboard_callback]
++
++data_augmentation = Sequential([
++    RandomFlip("horizontal"),
++    RandomRotation(0.1),
++    RandomZoom(0.1),
++], name="data_augmentation")
++
++
++def generateModel(inputShape):
++    inputs = tf.keras.Input(shape=inputShape)
++
++    x = data_augmentation(inputs)
++
++    # 1. Block (Fängt mit 32 Filtern an)
++    x = tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation='relu')(x)
++    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
++
++    # 2. Block (Verdoppelt auf 64 Filter)
++    x = tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), padding='same', activation='relu')(x)
++    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
++
++    # 3. Block (Verdoppelt auf 128 Filter)
++    x = tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), padding='same', activation='relu')(x)
++    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
++
++    # 4. Block (Verdoppelt auf 256 Filter - hier "versteht" das Netz das Bild)
++    x = tf.keras.layers.Conv2D(filters=256, kernel_size=(3, 3), padding='same', activation='relu')(x)
++    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
++
++    # Classifier-Kopf
++    x = tf.keras.layers.Flatten()(x)
++    x = tf.keras.layers.Dense(units=256, activation='relu')(x)
++    x = tf.keras.layers.Dropout(0.5)(x)  # Hier ist der richtige Ort für Dropout!
++
++    # Finale Schicht (MUSS bei Mixed Precision explizit float32 sein)
++    outputs = tf.keras.layers.Dense(units=train_df_filtered['labels'].nunique(), activation='softmax', dtype='float32')(
++        x)
++
++    model = tf.keras.Model(inputs=inputs, outputs=outputs)
++    return model
++
++model = generateModel((224, 224, 3))
++
++model.summary()
++
++epochs = 60
++
++# Compile the model with an optimizer, loss function, and metrics.
++model.compile(
++    optimizer=Adam(learning_rate=0.001),
++    loss='mean_squared_error',
++    metrics=['accuracy']
++)
++
++# Start the training process.
++# verbose=1 will show the animated progress bar.
++history = model.fit(
++    train_gen,
++    epochs=epochs,
++    validation_data=valid_gen,
++    callbacks=callbacks_list,
++    verbose=1
++)
++
++def plot_training(hist):
++    acc = hist.history['accuracy']
++    val_acc = hist.history['val_accuracy']
++    loss = hist.history['loss']
++    val_loss = hist.history['val_loss']
++    epochs = range(1, len(acc) + 1)
++
++    plt.figure(figsize=(14, 5))
++    plt.subplot(1, 2, 1)
++    plt.plot(epochs, acc, 'b-', label='Training Accuracy')
++    plt.plot(epochs, val_acc, 'r-', label='Validation Accuracy')
++    plt.title('Training and Validation Accuracy')
++    plt.legend()
++
++    plt.subplot(1, 2, 2)
++    plt.plot(epochs, loss, 'b-', label='Training Loss')
++    plt.plot(epochs, val_loss, 'r-', label='Validation Loss')
++    plt.title('Training and Validation Loss')
++    plt.legend()
++    plt.show()
++
++print("Displaying training history...")
++plot_training(history)
++
++print("\nEvaluating model on the test set...")
++loss, accuracy = model.evaluate(test_gen, verbose=1)
++print(f"Final Test Accuracy: {accuracy * 100:.2f}%")
++print(f"Final Test Loss: {loss:.4f}")
