@@ -1,5 +1,7 @@
 import datetime
 import os
+import random
+import hashlib
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -11,89 +13,108 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLRO
 from tensorflow.keras.optimizers import AdamW
 
 # HINWEIS: Mixed Precision bewusst deaktiviert zur Absicherung der WSL2-VRAM-Stabilität.
-from Src.architectures import (
-    build_aeroconv1, build_aeroconv2, build_aeroconv3, build_aeroconv4,
-    build_aeroconv5, build_aeroconv6, build_aeroconv7, build_aeroconv8,
-    build_aeroconv9, build_aeroconv10
-)
+from Src.architectures import build_aeroconv10
 
 # --- 1. HYPERPARAMETER & STRUKTUR-SETUP ---
 data_dir = "data"
 batch_size = 16
-img_height = 224  # Optimierte Dimension zur Gewährleistung der VRAM-Stabilität bei Batch Size 16
+img_height = 224
 img_width = 224
 
-# --- 2. PIPELINE STRATIFICATION: PHASE I (80% Training, 20% Temporärer Rest) ---
-print("Lade Trainingsdaten (80%)...")
-train_ds = tf.keras.utils.image_dataset_from_directory(
-    data_dir,
-    validation_split=0.2,
-    subset="training",
-    seed=45,
-    image_size=(img_height, img_width),
-    batch_size=batch_size
+# --- 2. PIPELINE STRATIFICATION: DETERMINISTISCHER SPLIT ---
+print("\n--- Sammle und splitte Bilder deterministisch (Seed: 45) ---")
+
+
+def create_deterministic_datasets(data_dir, img_height, img_width, batch_size, seed=45):
+    class_names = sorted([d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))])
+    class_to_idx = {name: i for i, name in enumerate(class_names)}
+
+    all_paths = []
+    all_labels = []
+
+    # Alle Bildpfade sammeln
+    for class_name in class_names:
+        class_dir = os.path.join(data_dir, class_name)
+        for img_name in sorted(os.listdir(class_dir)):
+            if img_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+                all_paths.append(os.path.join(class_dir, img_name))
+                all_labels.append(class_to_idx[class_name])
+
+    # Deterministisch mischen
+    combined = list(zip(all_paths, all_labels))
+    random.seed(seed)
+    random.shuffle(combined)
+    all_paths, all_labels = zip(*combined)
+
+    # 80% Train, 10% Val, 10% Test
+    total = len(all_paths)
+    train_end = int(total * 0.8)
+    val_end = int(total * 0.9)
+
+    train_paths, train_labels = all_paths[:train_end], all_labels[:train_end]
+    val_paths, val_labels = all_paths[train_end:val_end], all_labels[train_end:val_end]
+    test_paths, test_labels = all_paths[val_end:], all_labels[val_end:]
+
+    def parse_image(filename, label):
+        image_string = tf.io.read_file(filename)
+        image = tf.image.decode_jpeg(image_string, channels=3)
+        image = tf.image.resize(image, [img_height, img_width])
+        image = tf.cast(image, tf.float32)
+        return image, label
+
+    def build_tf_dataset(paths, labels, is_training):
+        ds = tf.data.Dataset.from_tensor_slices((list(paths), list(labels)))
+        if is_training:
+            ds = ds.shuffle(buffer_size=2000, seed=seed)
+
+        ds = ds.map(parse_image, num_parallel_calls=4)
+
+        ds = ds.batch(batch_size)
+        return ds.prefetch(buffer_size=2)
+
+    train_ds = build_tf_dataset(train_paths, train_labels, is_training=True)
+    val_ds = build_tf_dataset(val_paths, val_labels, is_training=False)
+    test_ds = build_tf_dataset(test_paths, test_labels, is_training=False)
+
+    print(f"Erfolgreich aufgeteilt: {len(train_paths)} Train | {len(val_paths)} Val | {len(test_paths)} Test")
+    return train_ds, val_ds, test_ds, class_names, train_labels
+
+
+train_ds, val_ds, test_ds, class_names, raw_train_labels = create_deterministic_datasets(
+    data_dir, img_height, img_width, batch_size, seed=45
 )
 
-print("Lade restliche Daten (20%)...")
-val_temp_ds = tf.keras.utils.image_dataset_from_directory(
-    data_dir,
-    validation_split=0.2,
-    subset="validation",
-    seed=45,
-    image_size=(img_height, img_width),
-    batch_size=batch_size
-)
-
-# --- 3. PIPELINE STRATIFICATION: PHASE II (Restliche 20% halbieren in 10% Val / 10% Test) ---
-# Garantiert ein mathematisch sauberes und repräsentatives Drei-Wege-Splitting
-val_batches = tf.data.experimental.cardinality(val_temp_ds)
-test_ds = val_temp_ds.take(val_batches // 2)
-val_ds = val_temp_ds.skip(val_batches // 2)
-
-# --- COST-SENSITIVE LEARNING (Klassengewichtung) ---
-print("Berechne Klassengewichte (Class Weights)...")
-y_train = np.concatenate([y.numpy() for x, y in train_ds], axis=0)
+# --- 3. COST-SENSITIVE LEARNING (Klassengewichtung) ---
+print("\n--- Berechne Klassengewichte (Class Weights) ---")
 class_weights = compute_class_weight(
     class_weight='balanced',
-    classes=np.unique(y_train),
-    y=y_train
+    classes=np.unique(raw_train_labels),
+    y=raw_train_labels
 )
 global_weight = dict(enumerate(class_weights))
+print("Gewichte erfolgreich berechnet!")
 
-class_names = train_ds.class_names
-print(f"Gefundene Klassen: {class_names}")
-print(f"Anzahl Trainings-Batches: {tf.data.experimental.cardinality(train_ds)}")
-print(f"Anzahl Validierungs-Batches: {tf.data.experimental.cardinality(val_ds)}")
-print(f"Anzahl Test-Batches: {tf.data.experimental.cardinality(test_ds)}")
-
-# --- 4. PERFORMANCE OPTIMIERUNG VIA TENSORFLOW DATA API ---
-AUTOTUNE = tf.data.AUTOTUNE
-# Prefetching entkoppelt das Laden der Daten von der GPU-Verarbeitung (Verhinderung von Hardware-Bottlenecks)
-train_ds = train_ds.prefetch(buffer_size=AUTOTUNE)
-val_ds = val_ds.prefetch(buffer_size=AUTOTUNE)
-test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
-
-# --- 5. MODELL-INSTANZIIERUNG (AeroConv10) ---
 num_classes = len(class_names)
+print(f"Gefundene Klassen: {num_classes}")
+
+# --- 4. MODELL-INSTANZIIERUNG (AeroConv10) ---
+print("\n--- Initialisiere AeroConv10 (From Scratch) ---")
 model = build_aeroconv10(num_classes=num_classes, input_shape=(img_height, img_width, 3))
 model.summary()
 
-# --- OPTIMIERUNGS-WÄCHTER (Callbacks für Kapitel 3.3) ---
-# Verhindert Overfitting durch vorzeitigen Abbruch bei Stagnation des Validierungs-Verlusts
+# --- 5. OPTIMIERUNGS-WÄCHTER (Callbacks) ---
 early_stopping = EarlyStopping(
     monitor='val_loss',
-    patience=6,
+    patience=10,
     restore_best_weights=True
 )
 
-# Sichert den absolut besten Gewichts-Zustand zeitsynchronisiert auf die Festplatte
 model_checkpoint = ModelCheckpoint(
-    filepath='Model/best_model_'+datetime.datetime.now().strftime("%Y%m%d-%H%M")+'.keras',
+    filepath='Model/best_model_' + datetime.datetime.now().strftime("%Y%m%d-%H%M") + '.keras',
     monitor='val_loss',
     save_best_only=True
 )
 
-# Verringert die Schrittweite dynamisch, um präzise in enge Täler der Loss-Landschaft zu steuern
 reduce_lr = ReduceLROnPlateau(
     monitor='val_loss',
     factor=0.5,
@@ -102,22 +123,24 @@ reduce_lr = ReduceLROnPlateau(
     verbose=1
 )
 
-# Schreibt Telemetriedaten für die interaktive Weboberfläche in Ubuntu / WSL2
 log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M")
 tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=0)
 
 callbacks_list = [model_checkpoint, early_stopping, tensorboard_callback, reduce_lr]
 
 # --- 6. MODELL-KOMPILIERUNG ---
-# AdamW mit entkoppelter Gewichtungsdekadenz und starrem Gradient-Clipping gegen Gradienten-Explosion
 model.compile(
-    optimizer=AdamW(learning_rate=0.0001, weight_decay=1e-4, clipnorm=1.0),
-    loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+    optimizer=AdamW(learning_rate=0.001, weight_decay=1e-4, clipnorm=1.0),
+    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
     metrics=['accuracy']
 )
 
 # --- 7. TRAININGS-PHASE ---
-epochs = 100
+print("\n" + "=" * 50)
+print("STARTE TRAINING VON GRUND AUF (Mit Augmentation)")
+print("=" * 50)
+
+epochs = 50
 history = model.fit(
     train_ds,
     validation_data=val_ds,
@@ -126,44 +149,44 @@ history = model.fit(
     class_weight=global_weight,
 )
 
-# --- 8. ABSCHLUSSPRÜFUNG (Evaluierung auf isolierten Testdaten für Kapitel 4.3) ---
+# --- 8. ABSCHLUSSPRÜFUNG (Evaluierung auf Testdaten) ---
 print("\n--- Training beendet. Starte Abschlussprüfung auf Testdaten ---")
 test_loss, test_accuracy = model.evaluate(test_ds)
-print(f"Test-Genauigkeit (Accuracy): {test_accuracy * 100:.2f}%")
+print(f"\nTest-Genauigkeit (Accuracy): {test_accuracy * 100:.2f}%\n")
 
-# Plot-Funktion für die im Paper untereinander gesetzten Konvergenzkurven
+
+# --- 9. PLOT TRAINING HISTORY ---
 def plot_training(hist):
     acc = hist.history['accuracy']
     val_acc = hist.history['val_accuracy']
     loss = hist.history['loss']
     val_loss = hist.history['val_loss']
-    epochs = range(1, len(acc) + 1)
+    epochs_range = range(1, len(acc) + 1)
 
     plt.figure(figsize=(14, 5))
     plt.subplot(1, 2, 1)
-    plt.plot(epochs, acc, 'b-', label='Training Accuracy')
-    plt.plot(epochs, val_acc, 'r-', label='Validation Accuracy')
+    plt.plot(epochs_range, acc, 'b-', label='Training Accuracy')
+    plt.plot(epochs_range, val_acc, 'r-', label='Validation Accuracy')
     plt.title('Training and Validation Accuracy')
     plt.legend()
 
     plt.subplot(1, 2, 2)
-    plt.plot(epochs, loss, 'b-', label='Training Loss')
-    plt.plot(epochs, val_loss, 'r-', label='Validation Loss')
+    plt.plot(epochs_range, loss, 'b-', label='Training Loss')
+    plt.plot(epochs_range, val_loss, 'r-', label='Validation Loss')
     plt.title('Training and Validation Loss')
     plt.legend()
     plt.show()
 
+
 print("Displaying training history...")
 plot_training(history)
 
-# --- 9. GENERIERUNG DER WAHRHEITSMATRIX (Für den LaTeX-Anhang) ---
+# --- 10. GENERIERUNG DER WAHRHEITSMATRIX ---
 print("\n--- Erstelle Wahrheitsmatrix (Confusion Matrix) ---")
-
 y_true = []
 y_pred = []
 
 print("Sammle Vorhersagen für die Testdaten...")
-# Ein einziger, sequentieller Durchlauf durch test_ds, um Index-Verschiebungen auszuschließen
 for x_batch, y_batch in test_ds:
     preds = model.predict(x_batch, verbose=0)
     y_true.extend(y_batch.numpy())
@@ -172,21 +195,19 @@ for x_batch, y_batch in test_ds:
 y_true = np.array(y_true)
 y_pred = np.array(y_pred)
 
-# Matrix-Berechnung über scikit-learn
 cm = confusion_matrix(y_true, y_pred, labels=np.arange(len(class_names)))
 
-# Heatmap-Generierung via Seaborn
 plt.figure(figsize=(14, 12))
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
             xticklabels=class_names, yticklabels=class_names)
 
 plt.xlabel('Vorhergesagte Klasse (Das sagt die KI)', fontsize=12)
 plt.ylabel('Wahre Klasse (Das ist es wirklich)', fontsize=12)
-plt.title('Welche Flugzeuge verwechselt das Modell?', fontsize=16)
+plt.title(f'Wahrheitsmatrix - Test Accuracy: {test_accuracy * 100:.1f}%', fontsize=16)
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.show()
 
-# Ausgabe des detaillierten Reports für die große F1-Score Tabelle im Anhang
 print("\n--- Detaillierter Klassifikations-Report ---")
-print(classification_report(y_true, y_pred, labels=np.arange(len(class_names)), target_names=class_names, zero_division=0))
+print(classification_report(y_true, y_pred, labels=np.arange(len(class_names)), target_names=class_names,
+                            zero_division=0))
