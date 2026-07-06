@@ -30,47 +30,87 @@ results_dir = "Benchmark_Results"
 if not os.path.exists(results_dir):
     os.makedirs(results_dir)
 
-# --- 2. ASYNCHRONOUS DATA PIPELINE & PIPELINE STRATIFICATION ---
-print("Lade Datensätze für den Benchmark...")
+# --- 2. PIPELINE STRATIFICATION: DETERMINISTISCHER SPLIT ---
+print("\n--- Sammle und splitte Bilder deterministisch (Seed: 45) ---")
 
-# Trainingsdaten (80% des Rohdaten-Pools vor dem finalen Test-Split)
-train_ds = tf.keras.utils.image_dataset_from_directory(
-    data_dir, validation_split=0.2, subset="training", seed=45,
-    image_size=(img_height, img_width), batch_size=batch_size
+
+def create_deterministic_datasets(data_dir, img_height, img_width, batch_size, seed=45):
+    class_names = sorted([d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))])
+    class_to_idx = {name: i for i, name in enumerate(class_names)}
+
+    all_paths = []
+    all_labels = []
+
+    # Alle Bildpfade sammeln
+    for class_name in class_names:
+        class_dir = os.path.join(data_dir, class_name)
+        for img_name in sorted(os.listdir(class_dir)):
+            if img_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+                all_paths.append(os.path.join(class_dir, img_name))
+                all_labels.append(class_to_idx[class_name])
+
+    # Deterministisch mischen
+    combined = list(zip(all_paths, all_labels))
+    random.seed(seed)
+    random.shuffle(combined)
+    all_paths, all_labels = zip(*combined)
+
+    # 80% Train, 10% Val, 10% Test
+    total = len(all_paths)
+    train_end = int(total * 0.8)
+    val_end = int(total * 0.9)
+
+    train_paths, train_labels = all_paths[:train_end], all_labels[:train_end]
+    val_paths, val_labels = all_paths[train_end:val_end], all_labels[train_end:val_end]
+    test_paths, test_labels = all_paths[val_end:], all_labels[val_end:]
+
+    # OOM-freundliche Parsing-Funktion
+    def parse_image(filename, label):
+        image_string = tf.io.read_file(filename)
+        image = tf.image.decode_jpeg(image_string, channels=3)
+        image = tf.image.resize(image, [img_height, img_width])
+        image = tf.cast(image, tf.float32)
+        return image, label
+
+    def build_tf_dataset(paths, labels, is_training):
+        ds = tf.data.Dataset.from_tensor_slices((list(paths), list(labels)))
+        if is_training:
+            ds = ds.shuffle(buffer_size=2000, seed=seed)
+
+        # Parallelisiertes Laden der Bilder (begrenzt gegen RAM-Überlastung)
+        ds = ds.map(parse_image, num_parallel_calls=4)
+
+        ds = ds.batch(batch_size)
+        return ds.prefetch(buffer_size=2)
+
+    train_ds = build_tf_dataset(train_paths, train_labels, is_training=True)
+    val_ds = build_tf_dataset(val_paths, val_labels, is_training=False)
+    test_ds = build_tf_dataset(test_paths, test_labels, is_training=False)
+
+    print(f"Erfolgreich aufgeteilt: {len(train_paths)} Train | {len(val_paths)} Val | {len(test_paths)} Test")
+    return train_ds, val_ds, test_ds, class_names, train_labels
+
+
+train_ds, val_ds, test_ds, class_names, raw_train_labels = create_deterministic_datasets(
+    data_dir, img_height, img_width, batch_size, seed=45
 )
 
-# Temporärer Datensatz zur Abspaltung von Validierung und Test
-val_temp_ds = tf.keras.utils.image_dataset_from_directory(
-    data_dir, validation_split=0.2, subset="validation", seed=45,
-    image_size=(img_height, img_width), batch_size=batch_size
-)
-
-# Äquivalente Aufteilung (50/50) des temporären Datensatzes in finale Test- und Validierungsdaten
-val_batches = tf.data.experimental.cardinality(val_temp_ds)
-test_ds = val_temp_ds.take(val_batches // 2)
-val_ds = val_temp_ds.skip(val_batches // 2)
-
-class_names = train_ds.class_names
 num_classes = len(class_names)
 
-# COST-SENSITIVE LEARNING: Mathematischer Ausgleich des Klassenungleichgewichts
-print("Berechne Klassengewichte...")
-y_train = np.concatenate([y.numpy() for x, y in train_ds], axis=0)
-class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
+class_weights = compute_class_weight(
+    class_weight='balanced',
+    classes=np.unique(raw_train_labels),
+    y=raw_train_labels
+)
 global_weight = dict(enumerate(class_weights))
 
-# I/O-Optimierung: Prefetching lädt Daten asynchron auf die GPU während des Trainingsschritts
-AUTOTUNE = tf.data.AUTOTUNE
-train_ds = train_ds.prefetch(buffer_size=AUTOTUNE)
-val_ds = val_ds.prefetch(buffer_size=AUTOTUNE)
-test_ds = test_ds.prefetch(buffer_size=AUTOTUNE)
 
 # --- 3. AUTOMATED BENCHMARK PIPELINE ---
 # Iterationsliste für den automatisierten Modell-Vergleich
 architecture_functions = [
     build_aeroconv1, build_aeroconv2, build_aeroconv3, build_aeroconv4,
     build_aeroconv5, build_aeroconv6, build_aeroconv7, build_aeroconv8,
-    build_aeroconv9
+    build_aeroconv9, build_aeroconv10
 ]
 
 benchmark_summary = []
@@ -83,7 +123,7 @@ for build_fn in architecture_functions:
 
     # Modellinstanziierung basierend auf den vordefinierten Bildmaßen
     model = build_fn(num_classes=num_classes, input_shape=(img_height, img_width, 3))
-
+    """
     # Konsistente Kompilierungsparameter mit Gradient-Clipping zur numerischen Stabilität
     model.compile(
         optimizer=AdamW(learning_rate=0.0001, weight_decay=1e-4, clipnorm=1.0),
@@ -103,7 +143,7 @@ for build_fn in architecture_functions:
     history = model.fit(
         train_ds,
         validation_data=val_ds,
-        epochs=100,
+        epochs=40,
         callbacks=[early_stopping, reduce_lr, checkpoint],
         class_weight=global_weight,
         verbose=1
@@ -161,6 +201,8 @@ for build_fn in architecture_functions:
     cm_path = os.path.join(results_dir, f"{model_name}_ConfusionMatrix.png")
     plt.savefig(cm_path, dpi=200)
     plt.close()  # Speicherbereinigung: Schließt die Grafik, um RAM-Anstauungen im Loop zu verhindern
+    """
+    print(model.summary())
 
 
 # --- 5. DATA AGGREGATION & EXPORT ---
