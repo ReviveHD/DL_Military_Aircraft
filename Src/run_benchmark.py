@@ -123,7 +123,7 @@ for build_fn in architecture_functions:
 
     # Modellinstanziierung basierend auf den vordefinierten Bildmaßen
     model = build_fn(num_classes=num_classes, input_shape=(img_height, img_width, 3))
-
+    """
     # Konsistente Kompilierungsparameter mit Gradient-Clipping zur numerischen Stabilität
     model.compile(
         optimizer=AdamW(learning_rate=0.0001, weight_decay=1e-4, clipnorm=1.0),
@@ -201,6 +201,8 @@ for build_fn in architecture_functions:
     cm_path = os.path.join(results_dir, f"{model_name}_ConfusionMatrix.png")
     plt.savefig(cm_path, dpi=200)
     plt.close()  # Speicherbereinigung: Schließt die Grafik, um RAM-Anstauungen im Loop zu verhindern
+    """
+    print(model.summary())
 
 
 # --- 5. DATA AGGREGATION & EXPORT ---
